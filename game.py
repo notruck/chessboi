@@ -3,20 +3,44 @@ from time import time
 
 import pyffish as sf
 
-# Variant: (folder, board type, flip pieces)
-VARIANTS = {'chess':            ('chess', 'checkerboard', False),
-            'dragonfly':        ('chess', 'checkerboard', False),
-            'extinction':       ('chess', 'checkerboard', False),
-            'grand':            ('chess', 'checkerboard', False),
-            'racingchess':      ('chess', 'checkerboard', False),
-            'twokings':         ('chess', 'checkerboard', False),
+
+CWDA_TEXT = """
+**FIDE mirror**
+startFen = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
+**FIDE vs COLORBOUND**
+startFen = ewfakfwe/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
+**FIDE vs KNIGHTS**
+startFen = hixokxih/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
+**FIDE vs ROOKIES**
+startFen = sydckdys/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
+**COLORBOUND vs FIDE**
+startFen = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/EWFAKFWE w - - 0 1
+**COLORBOUND mirror**
+startFen = ewfakfwe/pppppppp/8/8/8/8/PPPPPPPP/EWFAKFWE w - - 0 1
+**COLORBOUND vs KNIGHTS**
+startFen = hixokxih/pppppppp/8/8/8/8/PPPPPPPP/EWFAKFWE w - - 0 1
+**COLORBOUND vs ROOKIES**
+startFen = sydckdys/pppppppp/8/8/8/8/PPPPPPPP/EWFAKFWE w - - 0 1
+
+Detailed rules here: https://en.wikipedia.org/wiki/Chess_with_different_armies"""
+
+
+# Variant: (folder, board type, flip pieces, rules)
+VARIANTS = {'chess':            ('chess', 'checkerboard', False, 'Ordinary chess.'),
+            'dragonfly':        ('chess', 'checkerboard', False, 'Crazyhouse on a smaller board, but with no pawn drops.'),
+            'extinction':       ('chess', 'checkerboard', False, 'Win by capturing every piece of a certain type (eg. 1 queen or 2 bishops).'),
+            'grand':            ('chess', 'checkerboard', False, 'Chess but bigger. Hawk = B+N, Elephant = R+N. Pawns promote on the 8th rank to a captured piece.'),
+            'kamikazerooks':    ('chess', 'checkerboard', False, 'Lose both rooks to win!!! (???)'),
+            'racingchess':      ('chess', 'checkerboard', False, 'Win by campmate. No checks allowed.'),
+            'twokings':         ('chess', 'checkerboard', False, 'Chess but with two kings. You need to keep both of them safe.'),
             
-            'chak':             ('chak', 'custom', False),
-            'chennis':          ('chennis', 'custom', False),
-            'makrukhouse':      ('makruk', (239, 170, 86), False),
-            'mounted':          ('mounted', 'custom', False),
-            'pandemonium':      ('pandemonium', [(168, 200, 224), (192, 240, 255)], True),
-            'shinobimirror':    ('shinobimirror', 'checkerboard', False)
+            'chak':             ('chak', 'custom', False, 'Mesoamerican chess. See detailed rules at https://www.pychess.org/variants/chak'),
+            'chennis':          ('chennis', 'custom', False, 'Chess on a tennis court. See detailed rules at https://www.pychess.org/variants/chennis'),
+            'cwda':             ('cwda', 'checkerboard', False, CWDA_TEXT),
+            'makhouse':         ('makruk', (239, 170, 86), False, 'Makruk combined with crazyhouse.'),
+            'mounted':          ('mounted', 'custom', False, 'Win by checkmate or by campmate. This variant has a lot of new pieces as well as piece drops.'),
+            'pandemonium':      ('pandemonium', [(168, 200, 224), (192, 240, 255)], True, 'maybe you can figure it out'),
+            'shinobimirror':    ('shinobimirror', 'checkerboard', False, 'Shinobi but both sides have the ninja army!')
             }
 
 class Game:
@@ -26,6 +50,7 @@ class Game:
         self.bplayer = bplayer
         self.start = time()
         self.moves = []
+        self.drawcount = 0
         self.w_offered_draw = False
         self.b_offered_draw = False
         self.w_offered_takeback = False
@@ -37,33 +62,38 @@ class Game:
         self.fen = self.startpos
         self.active = True
 
-    def variants_list(self):
+    @staticmethod
+    def variants_list():
         return sorted(VARIANTS.keys())
+
+    @staticmethod
+    def rules(variant):
+        return VARIANTS[variant][3]
     
+    def get_folder(self):
+        return VARIANTS[self.variant][0]
+
+    def board_type(self):
+        return VARIANTS[self.variant][1]
+
+    def flip_variant(self):
+        return VARIANTS[self.variant][2]
+
     def age_minutes(self):
         return round((time()-self.start)/60, 2)
 
     def turn(self, opposite=False):
-        white_to_move = "w" in self.fen.split() 
-        return ["Black", "White"][white_to_move != opposite] # logical XOR
-
-    def get_folder(self, variant):
-        return VARIANTS[variant][0]
-
-    def board_type(self, variant):
-        return VARIANTS[variant][1]
-
-    def flip_variant(self, variant):
-        return VARIANTS[variant][2]
+        white_to_move = "w" in self.fen.split()
+        return ["Black", "White"][white_to_move != opposite] # if opposite is True, white_to_move is flipped
 
     def render(self, img_name):
-        upside_down = self.turn() == 'Black'
-        flip_pieces = self.flip_variant(self.variant) and upside_down
+        upside_down = self.turn() == "Black"
+        flip_pieces = self.flip_variant() and upside_down
         lastmove = self.moves[-1] if self.moves else None
 
-        board = DrawBoard(self.fen, img_name, self.get_folder(self.variant), lastmove,
-                          upside_down, self.board_type(self.variant), flip_pieces)
-        board.render_board()
+        board = DrawBoard(self.fen, self.get_folder(), lastmove,
+                          upside_down, self.board_type(), flip_pieces)
+        board.render_board(img_name)
         return img_name
 
     def closest_san(self, input_move):
@@ -121,6 +151,12 @@ class Game:
 
     def player_is_playing(self, player_name):
         return player_name in (self.wplayer, self.bplayer)
+
+    def drawn_game(self):
+        return self.drawcount >= 10 and len(self.moves) >= 60
+    
+    def is_selfplay(self):
+        return self.wplayer == self.bplayer
     
     def player_turn(self, player_name, opposite=False):
         white_player = self.wplayer == player_name and self.turn(opposite=opposite) == 'White'

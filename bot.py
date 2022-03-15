@@ -5,7 +5,7 @@ import tinydb
 from re import findall
 from dotenv import load_dotenv
 from random import randint
-from asyncio import sleep
+import asyncio
 
 from game import Game
 from engine import Engine
@@ -19,10 +19,12 @@ ADMIN_NAME = os.getenv('ADMIN_NAME')
 ENGINE_LOCATION = os.getenv('ENGINE_LOCATION')
 VARIANTS_LOCATION = os.getenv('VARIANTS_LOCATION')
 MOVETIME = int(os.getenv('ENGINE_MOVETIME'))
+BOT_ID = int(os.getenv('BOT_ID'))
 
 client = discord.Client(activity=discord.Game(name='--help'))
 games_dict = {}
-allowed_variants = Game().variants_list()
+allowed_variants = Game.variants_list()
+
 
 db = tinydb.TinyDB('saved_games.json')
 for game_records in db: # only 1 entry in DB
@@ -79,16 +81,26 @@ async def bot_makes_move(message):
 
     # Get a best move from Fairy-Stockfish
     engine = Engine(ENGINE_LOCATION, VARIANTS_LOCATION, game.variant, game.bot_skill) 
-    bestmove, engine_eval = engine.analyze(game.startpos, game.moves, MOVETIME)
-    engine.quit()
+    bestmove, engine_eval = await engine.analyze(game.startpos, game.moves, MOVETIME)
+    await engine.quit()
     
     mating_line = engine_eval.split()[0] == 'mate' and -3 <= int(engine_eval.split()[1]) <= -1
     cp_losing = engine_eval.split()[0] == 'cp' and int(engine_eval.split()[1]) <= 50*game.bot_skill - 1500
+    cp_drawn = engine_eval.split()[0] == 'cp' and abs(int(engine_eval.split()[1])) <= 10
     # cp_losing threshold depends on skill, from -500 at max skill to -2500 at min skill
 
-    if mating_line or cp_losing:
+    if (cp_drawn and game.is_selfplay()):
+        game.drawcount += 1
+    else:
+        game.drawcount = 0
+
+    if (mating_line or cp_losing) and not game.is_selfplay():
         await message.channel.send(f"Alas, I have been bested :(")
         await message.channel.send("--resign") 
+        return
+
+    if (game.drawn_game()):
+        await message.channel.send("--offerdraw")
         return
     
     await message.channel.send(f"--m {sf.get_san(game.variant, game.fen, bestmove)} ||{decriptive_eval(engine_eval, game.turn() == 'White')}||")
@@ -118,6 +130,7 @@ async def on_message(message):
     
     if message_text == '--help':
         output = ("**Commands:**"
+                  "\n--rules [variant]"
                   "\n--fen [variant] [fen] (displays a FEN)"
                   "\n--game [variant] [@opponent] [white/black] [fen='{fen}'] [skill=(-20,20)] (starts a game)"
                   "\n--rematch"
@@ -136,6 +149,16 @@ async def on_message(message):
         await message.channel.send(output)
         return
 
+    if message_text.startswith('--rules '):
+        variant = message_text.split()[1]
+        if variant not in allowed_variants:
+            await message.channel.send("Variant not recognized.")
+            return
+
+        rules = Game.rules(variant)
+        await message.channel.send(f"Rules for **{variant}**: {rules}")
+        return
+        
     if message_text.startswith('--fen '):
         variant = message_text.split()[1]
         input_fen = ' '.join(message_text.split()[2:])
@@ -264,7 +287,10 @@ async def on_message(message):
             await message.channel.send("It's not your turn!")
             return
         
-        move = game.closest_san(message_text.split()[1])
+        move = message_text.split()[1] 
+        if not (username == BOT_NAME):
+            move = game.closest_san(move) # bot will always make a perfectly formatted move
+        
         if not move:
             await message.channel.send("Invalid move.")
             return
@@ -302,7 +328,7 @@ async def on_message(message):
         return
 
     if message_text.startswith('--premove') or message_text.startswith('--pm'):
-        await sleep(2) # otherwise stuff breaks
+        await asyncio.sleep(2) # otherwise stuff breaks
 
         # Check if premove can be made
         if not (game and game.active):
@@ -346,6 +372,10 @@ async def on_message(message):
         if not (game and game.active):
             await message.channel.send("No game is active.")
             return
+
+        if username == BOT_NAME:
+            await game_over(message, game.turn(opposite=True)) # bot only resigns on his own turn
+            return
         
         if username == game.wplayer:
             await game_over(message, "Black")
@@ -372,9 +402,9 @@ async def on_message(message):
             
             await message.channel.send("White offers a draw!")
 
-            if game.player_is_playing(BOT_NAME) and username != BOT_NAME:
-                await sleep(1)
-                await message.channel.send("--ad")
+            if game.player_is_playing(BOT_NAME):
+                await asyncio.sleep(1)
+                await message.channel.send("--acceptdraw")
                     
             return
             
@@ -387,8 +417,8 @@ async def on_message(message):
             
             await message.channel.send("Black offers a draw!")
 
-            if game.player_is_playing(BOT_NAME) and username != BOT_NAME:
-                await message.channel.send("--ad")
+            if game.player_is_playing(BOT_NAME):
+                await message.channel.send("--acceptdraw")
                     
             return
             
@@ -431,8 +461,8 @@ async def on_message(message):
             await message.channel.send("White asks for a takeback!")
 
             if game.player_is_playing(BOT_NAME) and username != BOT_NAME:
-                await sleep(1)
-                await message.channel.send("--atb")
+                await asyncio.sleep(1)
+                await message.channel.send("--accepttakeback")
                     
             return
         
@@ -445,7 +475,7 @@ async def on_message(message):
             await message.channel.send("Black asks for a takeback!")
 
             if game.player_is_playing(BOT_NAME) and username != BOT_NAME:
-                await message.channel.send("--atb")
+                await message.channel.send("--accepttakeback")
                     
             return
             
@@ -484,11 +514,11 @@ async def on_message(message):
         # Get a best move from Fairy-Stockfish
         engine = Engine(ENGINE_LOCATION, VARIANTS_LOCATION, game.variant, game.bot_skill)
         if username == ADMIN_NAME: # admin gets more stockfish power
-            engine.allocate(threads=11, memory=256)
-            engine_eval = engine.analyze(game.startpos, game.moves, MOVETIME*10)[1]
+            await engine.allocate(threads=11, memory=256)
+            engine_eval = (await engine.analyze(game.startpos, game.moves, MOVETIME*2))[1]
         else:
-            engine_eval = engine.analyze(game.startpos, game.moves, MOVETIME)[1]
-        engine.quit()
+            engine_eval = (await engine.analyze(game.startpos, game.moves, MOVETIME))[1]
+        await engine.quit()
         
         await message.channel.send(f"||{decriptive_eval(engine_eval, game.turn() == 'White')}||")
         return
@@ -503,6 +533,11 @@ async def on_message(message):
     if message_text == '--repr' and username == ADMIN_NAME:
         if game:
             await message.channel.send(game.__dict__)
+        return
+
+    if message_text.startswith('--selfplay ') and username == ADMIN_NAME:
+        variant = message_text.split()[1]
+        await message.channel.send(f"--game {variant} <@!{BOT_ID}> skill=20")
         return
 
     if str(client.user.id) in message_text and message.author != client.user:

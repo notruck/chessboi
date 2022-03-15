@@ -1,5 +1,7 @@
 import subprocess
 from re import findall
+from time import sleep
+import asyncio
 
 
 class Engine:
@@ -28,7 +30,7 @@ class Engine:
                 output += [text]
         return output
 
-    def allocate(self, threads=None, memory=None):
+    async def allocate(self, threads=None, memory=None):
         if threads:
             self.put(f"setoption name threads value {threads}")
         if memory: # MB
@@ -36,7 +38,7 @@ class Engine:
         self.get() # check that engine is ready
         return
 
-    def analyze(self, fen, moves, movetime):
+    async def analyze(self, fen, moves, movetime):
         self.put(f"position fen {fen} moves {' '.join(moves)}")
         self.put(f"go movetime {movetime}")
 
@@ -50,8 +52,9 @@ class Engine:
                     engine_eval = findall("(?:cp|mate) [-]?\d+", ''.join(std_output))[-1]
                     break
             std_output += self.get()
+            await asyncio.sleep(0.01)
 
         return (bestmove, engine_eval)
 
-    def quit(self):
+    async def quit(self):
         self.put("quit")
