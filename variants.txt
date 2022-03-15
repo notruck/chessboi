@@ -57,28 +57,77 @@ dropPromoted = true
 castling = false
 stalemateValue = loss
 
+# Chess with different armies
+[cwda:chess]
+
+promotionPieceTypes = nbrqewfahixosydc
+
+# COLORBOUND CLOBBERERS
+#Bede = rook
+customPiece1 = e:BD
+#Waffle = knight
+customPiece2 = w:WA
+#FAD - bishop
+customPiece3 = f:FAD
+#cardinal = queen
+archbishop = a
+# NUTTY KNIGHTS
+#Charging rook
+customPiece4 = h:frlRrlbK
+#Fibnif
+customPiece5 = i:fbNF
+#Charging knight
+customPiece6 = x:fhNrlbK
+#Colonel
+customPiece7 = o:fhNfrlRK
+# REMARKABLE ROOKIES
+#Short rook
+customPiece8 = s:R4
+#Woody rook
+customPiece9 = y:WD
+#Half duck
+customPiece10 = d:HFD
+chancellor = c
+
+castling = false
+
+startFen = hixokxih/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
+
+# FIDE mirror 			startFen = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
+# FIDE vs COLORBOUND 	startFen = ewfakfwe/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
+# FIDE vs KNIGHTS 		startFen = hixokxih/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
+# FIDE vs ROOKIES 		startFen = sydckdys/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
+# COLORBOUND vs FIDE	startFen = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/EWFAKFWE w - - 0 1
+# COLORBOUND mirror 	startFen = ewfakfwe/pppppppp/8/8/8/8/PPPPPPPP/EWFAKFWE w - - 0 1
+# COLORBOUND vs KNIGHTS	startFen = hixokxih/pppppppp/8/8/8/8/PPPPPPPP/EWFAKFWE w - - 0 1
+# COLORBOUND vs ROOKIES	startFen = sydckdys/pppppppp/8/8/8/8/PPPPPPPP/EWFAKFWE w - - 0 1
+
 [dragonfly:chess]
 maxFile = 7
 maxRank = 7
 pocketSize = 7
 castlingKingsideFile = f
 castlingQueensideFile = b
+pieceDrops = true
 capturesToHand = true
 promotionRank = 7
 promotionPieceTypes = nbr
 doubleStep = false
 dropNoDoubled = p
 dropNoDoubledCount = 0
-flagPiece = k
-whiteFlag = *7
-blackFlag = *1
 startFen = rbbknnr/ppppppp/7/7/7/PPPPPPP/RBBKNNR[] w - - 0 1
-stalemateValue = loss
 
-[makrukhouse:makruk]
+[kamikazerooks:chess]
+extinctionValue = win
+extinctionPieceTypes = r
+
+[makhouse:makruk]
 startFen = rnsmksnr/8/pppppppp/8/8/PPPPPPPP/8/RNSKMSNR[] w - - 0 1
 pieceDrops = true
 capturesToHand = true
+firstRankPawnDrops = true
+promotionZonePawnDrops = true
+immobilityIllegal = true
 
 [mounted]
 maxRank = 7
@@ -137,6 +186,10 @@ perpetualCheckIllegal = true
 nMoveRule = 0
 nFoldValue = loss
 stalemateValue = loss
+
+[placementchess:placement]
+dropOppositeColoredBishop = false
+castling = false
 
 [racingchess:chess]
 flagPiece = k
