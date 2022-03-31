@@ -73,11 +73,11 @@ customPiece3 = f:FAD
 archbishop = a
 # NUTTY KNIGHTS
 #Charging rook
-customPiece4 = h:frlRrlbK
+customPiece4 = h:frlRWbF
 #Fibnif
 customPiece5 = i:fbNF
 #Charging knight
-customPiece6 = x:fhNrlbK
+customPiece6 = x:fhNbFbrlW
 #Colonel
 customPiece7 = o:fhNfrlRK
 # REMARKABLE ROOKIES
