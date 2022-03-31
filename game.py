@@ -153,7 +153,7 @@ class Game:
         return player_name in (self.wplayer, self.bplayer)
 
     def drawn_game(self):
-        return self.drawcount >= 10 and len(self.moves) >= 60
+        return self.drawcount >= 10 and len(self.moves) >= 80
     
     def is_selfplay(self):
         return self.wplayer == self.bplayer
