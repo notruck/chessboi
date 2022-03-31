@@ -169,13 +169,13 @@ class DrawBoard:
             white_pocket = [white_hand[i:i + b_width] for i in range(0, len(white_hand), b_width)]
             for i in range(len(white_pocket)):
                 for j in range(len(white_pocket[i])):
-                    piece = self.get_piece_img(white_pocket[i][j], self.folder)
+                    piece = self.get_piece_img(white_pocket[i][j])
                     img.paste(piece, (j*SQ_SIZE, (i+b_height)*SQ_SIZE + spacer), piece)
 
             black_pocket = [black_hand[i:i + b_width] for i in range(0, len(black_hand), b_width)]
             for i in range(len(black_pocket)):
                 for j in range(len(black_pocket[i])):
-                    piece = self.get_piece_img(black_pocket[i][j], self.folder)
+                    piece = self.get_piece_img(black_pocket[i][j])
                     img.paste(piece, (j*SQ_SIZE, (i+b_height+len(white_pocket))*SQ_SIZE + spacer), piece)
 
         img.save(img_name)
