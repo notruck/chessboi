@@ -102,6 +102,10 @@ async def bot_makes_move(message):
 
     # Get a best move from Fairy-Stockfish
     engine = Engine(ENGINE_LOCATION, VARIANTS_LOCATION, game.variant, game.bot_skill) 
+    
+    if game.is_selfplay():
+        await engine.allocate(threads=11, memory=256)
+        
     bestmove, engine_eval = await engine.analyze(game.startpos, game.moves, MOVETIME)
     await engine.quit()
     
@@ -567,7 +571,8 @@ async def on_message(message):
 
     if message_text.startswith('--selfplay ') and username == ADMIN_NAME:
         variant = message_text.split()[1]
-        await message.channel.send(f"--game {variant} <@!{BOT_ID}> skill=20")
+        input_fen = ' '.join(message_text.split()[2:])
+        await message.channel.send(f"--game {variant} <@!{BOT_ID}> skill=20 fen='{input_fen}'")
         return
 
     if str(client.user.id) in message_text and message.author != client.user:
