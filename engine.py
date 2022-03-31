@@ -3,6 +3,7 @@ from re import findall
 from time import sleep
 import asyncio
 
+nnues = {"crazyhouse": "crazyhouse-f0782c10a2d4.nnue"}
 
 class Engine:
     def __init__(self, location, variantsfile, variant, skill=20):
@@ -15,6 +16,11 @@ class Engine:
         self.put(f"load {variantsfile}")
         self.put(f"setoption name UCI_Variant value {variant}")
         self.put(f"setoption name Skill Level value {skill}")
+        self.put("setoption name UCI_Chess960 value true")
+        
+        # Load NNUE
+        if variant in nnues:
+            self.put(f"setoption name EvalFile value {nnues[variant]}")
 
     def put(self, command):
         self.engine.stdin.write(command + "\n")
