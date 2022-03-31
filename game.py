@@ -3,7 +3,7 @@ from time import time
 
 import pyffish as sf
 
-
+# really long text so separate variable
 CWDA_TEXT = """
 **FIDE mirror**
 startFen = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1
@@ -27,6 +27,7 @@ Detailed rules here: https://en.wikipedia.org/wiki/Chess_with_different_armies""
 
 # Variant: (folder, board type, flip pieces, rules)
 VARIANTS = {'chess':            ('chess', 'checkerboard', False, 'Ordinary chess.'),
+            'crazyhouse':       ('chess', 'checkerboard', False, 'Chess but you can AIRDROP pieces?!?!?!11 (It\'s CRAZY)'),
             'dragonfly':        ('chess', 'checkerboard', False, 'Crazyhouse on a smaller board, but with no pawn drops.'),
             'extinction':       ('chess', 'checkerboard', False, 'Win by capturing every piece of a certain type (eg. 1 queen or 2 bishops).'),
             'grand':            ('chess', 'checkerboard', False, 'Chess but bigger. Hawk = B+N, Elephant = R+N. Pawns promote on the 8th rank to a captured piece.'),
