@@ -512,7 +512,7 @@ async def on_message(message):
             return
         
         # Get a best move from Fairy-Stockfish
-        engine = Engine(ENGINE_LOCATION, VARIANTS_LOCATION, game.variant, game.bot_skill)
+        engine = Engine(ENGINE_LOCATION, VARIANTS_LOCATION, game.variant, 20)
         if username == ADMIN_NAME: # admin gets more stockfish power
             await engine.allocate(threads=11, memory=256)
             engine_eval = (await engine.analyze(game.startpos, game.moves, MOVETIME*2))[1]
@@ -547,7 +547,6 @@ async def on_message(message):
 
 @client.event
 async def on_error(event, *args, **kwargs):
-    raise
     with open('err.log', 'a') as log:
         if event == 'on_message':
             log.write(f'Unhandled message: {args[0]}\n')
