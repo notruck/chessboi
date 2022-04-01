@@ -119,10 +119,10 @@ class Game:
         return None
     
     def make_move(self, san_move):
-        uci_legal_moves = sf.legal_moves(self.variant, self.fen, [])
+        uci_legal_moves = sf.legal_moves(self.variant, self.fen, [], True)
         
         for move in uci_legal_moves:
-            if sf.get_san(self.variant, self.fen, move) == san_move:
+            if sf.get_san(self.variant, self.fen, move, True) == san_move:
                 self.moves += [move]
                 break
 
@@ -130,11 +130,11 @@ class Game:
         self.update_fen()
 
     def legal_moves(self):
-        uci_moves = sf.legal_moves(self.variant, self.fen, [])
-        return [sf.get_san(self.variant, self.fen, move) for move in uci_moves]
+        uci_moves = sf.legal_moves(self.variant, self.fen, [], True)
+        return [sf.get_san(self.variant, self.fen, move, True) for move in uci_moves]
 
     def get_moves(self):
-        return sf.get_san_moves(self.variant, self.startpos, self.moves)
+        return sf.get_san_moves(self.variant, self.startpos, self.moves, True)
 
     def takeback_move(self, count):
         self.moves = self.moves[:-count]
@@ -148,7 +148,7 @@ class Game:
         self.b_offered_takeback = False
 
     def update_fen(self):
-        self.fen = sf.get_fen(self.variant, self.startpos, self.moves)
+        self.fen = sf.get_fen(self.variant, self.startpos, self.moves, True)
 
     def player_is_playing(self, player_name):
         return player_name in (self.wplayer, self.bplayer)
@@ -166,10 +166,10 @@ class Game:
         return white_player or black_player
     
     def ended(self):
-        uci_legal_moves = sf.legal_moves(self.variant, self.fen, [])
+        uci_legal_moves = sf.legal_moves(self.variant, self.fen, [], True)
         
         if len(uci_legal_moves) == 0:
-            result = sf.game_result(self.variant, self.fen, [])
+            result = sf.game_result(self.variant, self.fen, [], True)
             turn = self.turn()
             
             if result == sf.VALUE_MATE:
