@@ -3,64 +3,64 @@ from re import findall
 from time import sleep
 import asyncio
 
-nnues = {"crazyhouse": "crazyhouse-f0782c10a2d4.nnue"}
+nnues = {"crazyhouse", "dragonfly", "kamikazerooks", "makhouse", "mounted"}
 
 class Engine:
-    def __init__(self, location, variantsfile, variant, skill=20):
-        self.engine = subprocess.Popen(
-            location,
-            universal_newlines=True,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            bufsize=1)
-        self.put(f"load {variantsfile}")
-        self.put(f"setoption name UCI_Variant value {variant}")
-        self.put(f"setoption name Skill Level value {skill}")
-        self.put("setoption name UCI_Chess960 value true")
-        
-        # Load NNUE
-        if variant in nnues:
-            self.put(f"setoption name EvalFile value {nnues[variant]}")
+	def __init__(self, location, variantsfile, variant, skill=20):
+		self.engine = subprocess.Popen(
+			location,
+			universal_newlines=True,
+			stdin=subprocess.PIPE,
+			stdout=subprocess.PIPE,
+			bufsize=1)
+		self.put(f"load {variantsfile}")
+		self.put(f"setoption name UCI_Variant value {variant}")
+		self.put(f"setoption name Skill Level value {skill}")
+		self.put("setoption name UCI_Chess960 value true")
 
-    def put(self, command):
-        self.engine.stdin.write(command + "\n")
+		# Load NNUE
+		if variant in nnues:
+			self.put(f"setoption name EvalFile value nnues\\{variant}.nnue")
 
-    def get(self):
-        self.put("isready")
-        output = []
-        while True:
-            text = self.engine.stdout.readline().strip()
-            if text == "readyok":
-                break
-            if text:
-                output += [text]
-        return output
+	def put(self, command):
+		self.engine.stdin.write(command + "\n")
 
-    async def allocate(self, threads=None, memory=None):
-        if threads:
-            self.put(f"setoption name threads value {threads}")
-        if memory: # MB
-            self.put(f"setoption name hash value {memory}")
-        self.get() # check that engine is ready
-        return
+	def get(self):
+		self.put("isready")
+		output = []
+		while True:
+			text = self.engine.stdout.readline().strip()
+			if text == "readyok":
+				break
+			if text:
+				output += [text]
+		return output
 
-    async def analyze(self, fen, moves, movetime):
-        self.put(f"position fen {fen} moves {' '.join(moves)}")
-        self.put(f"go movetime {movetime}")
+	async def allocate(self, threads=None, memory=None):
+		if threads:
+			self.put(f"setoption name threads value {threads}")
+		if memory: # MB
+			self.put(f"setoption name hash value {memory}")
+		self.get() # check that engine is ready
+		return
 
-        # Get engine output    
-        std_output = []
-        while True:
-            if std_output:                    
-                bestmove_found = findall('bestmove .+', std_output[-1])
-                if bestmove_found: 
-                    bestmove = bestmove_found[0].split()[1]
-                    engine_eval = findall("(?:cp|mate) [-]?\d+", ''.join(std_output))[-1]
-                    break
-            std_output += self.get()
-            await asyncio.sleep(0.01)
+	async def analyze(self, fen, moves, movetime):
+		self.put(f"position fen {fen} moves {' '.join(moves)}")
+		self.put(f"go movetime {movetime}")
 
-        return (bestmove, engine_eval)
+		# Get engine output
+		std_output = []
+		while True:
+			if std_output:
+				bestmove_found = findall('bestmove .+', std_output[-1])
+				if bestmove_found:
+					bestmove = bestmove_found[0].split()[1]
+					engine_eval = findall("(?:cp|mate) [-]?\d+", ''.join(std_output))[-1]
+					break
+			std_output += self.get()
+			await asyncio.sleep(0.01)
 
-    async def quit(self):
-        self.put("quit")
+		return (bestmove, engine_eval)
+
+	async def quit(self):
+		self.put("quit")
