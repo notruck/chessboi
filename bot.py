@@ -183,6 +183,7 @@ async def on_message(message):
 				  "\n--asktakeback"
 				  "\n--accepttakeback"
 				  "\n--eval"
+				  "\n--clip"
 				  "\nAliases: --g, --rm, --m, --pm, --d, --od, --ad --tb, --atb"
 				  "\n\n**Available variants:** \n" + (', ').join(allowed_variants))
 
