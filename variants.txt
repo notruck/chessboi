@@ -57,6 +57,13 @@ dropPromoted = true
 castling = false
 stalemateValue = loss
 
+# Chess vs Hoppel-Poppel
+[chessvshp:chess]
+knibis = i
+biskni = j
+promotionPieceTypes = nbrqij
+startFen = rijqkjir/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+
 # Chess with different armies
 [cwda:chess]
 
@@ -121,13 +128,10 @@ startFen = rbbknnr/ppppppp/7/7/7/PPPPPPP/RBBKNNR[] w - - 0 1
 extinctionValue = win
 extinctionPieceTypes = r
 
-[makhouse:makruk]
+[makrukhouse:makruk]
 startFen = rnsmksnr/8/pppppppp/8/8/PPPPPPPP/8/RNSKMSNR[] w - - 0 1
 pieceDrops = true
 capturesToHand = true
-firstRankPawnDrops = true
-promotionZonePawnDrops = true
-immobilityIllegal = true
 
 [mounted]
 maxRank = 7
@@ -149,6 +153,24 @@ cannon = c
 customPiece1 = a:mBcpB 
 customPiece2 = s:FsfW
 startFen = 1cbkra1/2s1s2/7/7/7/2S1S2/1CBKRA1 w - - 0 1
+
+[ordavsempire:chess]
+centaur = h
+knibis = a
+kniroo = l
+customPiece1 = e:mQcN
+customPiece2 = c:mQcB
+customPiece3 = t:mQcR
+customPiece4 = d:mQcK
+customPiece5 = y:mNcK
+promotionPieceTypes = qh
+startFen = tecdkcet/8/pppppppp/8/8/PPPPPPPP/8/LHAYKAHL w - - 0 1
+stalemateValue = loss
+nFoldValue = loss
+flagPiece = k
+whiteFlag = *8
+blackFlag = *1
+flyingGeneral = true
 
 [pandemonium]
 pieceToCharTable = PNBRFSA.UV.++++++++.++Kpnbrfsa.uv.++++++++.++k
